@@ -1,0 +1,4 @@
+# URL Web App Google Apps Script (hasil Deploy -> Aplikasi web).
+# Taruh file ini di folder yang sama dengan index.html. Baris yang diawali # diabaikan.
+# Cukup SATU baris URL yang berakhiran /exec:
+https://script.google.com/macros/s/AKfycbyJ0wb7hkwaYX-p3zXsrq4lt-uWintdnY4mFSY5G-2uvZsEOhHK0rZ2AfZyMn0SA3A3/exec
