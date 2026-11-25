@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Absensi Karyawan - PT. Global Mega Indonesia</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .mirror-video { transform: scaleX(-1); }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- HEADER -->
+  <header class="bg-slate-900 text-white shadow-md shrink-0 sticky top-0 z-30">
+    <div class="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-600 rounded-lg transition no-underline">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3v-6h6v6h3a1 1 0 001-1V10"></path></svg>
+          <span>Beranda</span>
+        </a>
+        <div class="bg-white px-2 py-1 rounded-lg shadow flex items-center">
+          <svg width="56" height="20" viewBox="0 0 260 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M97 6H54C24 6 5 23 5 48C5 73 24 90 54 90H97V41H47V54H81V76H55C33 76 21 65 21 48C21 31 33 20 55 20H97V6Z" fill="#0F2C8C"/>
+            <path d="M98 6H128L165 65L173 6H203L227 90H208L190 25L181 90H163L122 25L141 90H122L98 6Z" fill="#0F2C8C"/>
+            <path d="M227 6H246V90H227V6Z" fill="#0F2C8C"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-sm sm:text-base font-bold leading-tight">Absensi Karyawan</h1>
+          <p class="text-[11px] text-slate-400 hidden sm:block">PT. Global Mega Indonesia — Geofence &amp; Live Selfie</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button type="button" id="btnAdminSettings" onclick="toggleAdminPanel()" class="hidden px-3 py-1.5 text-xs font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-lg shadow transition cursor-pointer">
+          Pengaturan Jam Kerja
+        </button>
+        <div id="userBadge" class="hidden sm:flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 text-xs">
+          <span id="headerUserName" class="font-bold text-white"></span>
+          <span id="headerUserRole" class="text-[10px] text-slate-400"></span>
+        </div>
+        <button type="button" onclick="handleLogout()" class="px-2.5 py-1.5 text-xs font-semibold bg-red-600/90 hover:bg-red-600 text-white rounded-lg transition cursor-pointer">
+          Keluar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- AUTH LOGIN OVERLAY -->
+  <div id="loginOverlay" class="fixed inset-0 z-50 bg-slate-900/95 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 space-y-4">
+      <div>
+        <h2 class="text-lg font-extrabold text-slate-900">Masuk ke Sistem Absensi</h2>
+        <p class="text-xs text-slate-500 mt-1">Gunakan akun terverifikasi GMI Portal Anda.</p>
+      </div>
+      <div id="loginAlert" class="hidden text-xs rounded-lg px-3 py-2 border"></div>
+      <form onsubmit="handleLogin(event)" class="space-y-3">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">Email</label>
+          <input type="email" id="login_email" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="nama@email.com" />
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">Password</label>
+          <input type="password" id="login_password" required class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+        </div>
+        <button type="submit" id="btnLogin" class="w-full py-2.5 text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow transition cursor-pointer">
+          Masuk &amp; Mulai Absensi
+        </button>
+      </form>
+      <div class="text-center pt-1">
+        <a href="index.html" class="text-xs font-semibold text-slate-500 hover:text-slate-800">← Kembali ke Beranda Portal</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <main id="mainApp" class="hidden flex-1 max-w-5xl w-full mx-auto px-4 py-5 space-y-5">
+
+    <!-- BANNER NOTIFIKASI STATUS ABSENSI HARI INI -->
+    <div id="statusBanner" class="rounded-2xl p-4 border shadow-sm flex flex-wrap items-center justify-between gap-3 bg-white border-slate-200">
+      <div class="flex items-start gap-3">
+        <div id="statusIcon" class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 font-bold text-lg">!</div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h2 id="statusTitle" class="text-sm sm:text-base font-extrabold text-slate-900">Memuat status absensi...</h2>
+            <span id="statusPill" class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-100 text-slate-700">MENUNGGU</span>
+          </div>
+          <p id="statusDesc" class="text-xs text-slate-600 mt-0.5">Sistem sedang memeriksa jadwal kerja dan lokasi GPS Anda.</p>
+        </div>
+      </div>
+      <div class="text-right font-mono">
+        <div id="liveClock" class="text-xl sm:text-2xl font-extrabold text-slate-900">--:--:--</div>
+        <div id="liveDate" class="text-[11px] text-slate-500"></div>
+      </div>
+    </div>
+
+    <!-- PANEL ADMIN: PENGATURAN JAM KERJA & KOORDINAT KANTOR -->
+    <section id="adminConfigSection" class="hidden bg-amber-50/80 border border-amber-300 rounded-2xl p-4 sm:p-5 space-y-4 shadow-sm">
+      <div class="flex items-center justify-between border-b border-amber-200 pb-2.5">
+        <div>
+          <h3 class="text-sm font-extrabold text-amber-950">Pengaturan Jam Kerja &amp; Geofence Kantor (Admin)</h3>
+          <p class="text-[11px] text-amber-800">Tentukan titik pusat perusahaan, batas radius absen, jadwal masuk/pulang, dan aturan lembur.</p>
+        </div>
+        <button type="button" onclick="toggleAdminPanel()" class="text-xs font-bold text-amber-900 hover:underline cursor-pointer">Tutup</button>
+      </div>
+
+      <form onsubmit="saveWorkConfig(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Latitude Kantor</label>
+          <input type="number" step="any" id="cfg_lat" required class="w-full px-3 py-2 border border-amber-300 rounded-lg bg-white font-mono" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Longitude Kantor</label>
+          <input type="number" step="any" id="cfg_lng" required class="w-full px-3 py-2 border border-amber-300 rounded-lg bg-white font-mono" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Radius Maksimal (Meter)</label>
+          <input type="number" min="10" max="5000" id="cfg_radius" required class="w-full px-3 py-2 border border-amber-300 rounded-lg bg-white font-mono" />
+        </div>
+        <div class="flex items-end">
+          <button type="button" onclick="useCurrentGpsForOffice()" class="w-full py-2 px-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-lg transition cursor-pointer">
+            Gunakan Lokasi Saya Saat Ini
+          </button>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Jam Masuk Kerja</label>
+          <input type="time" id="cfg_start" required class="w-full px-3 py-2 border border-amber-300 rounded-lg bg-white font-mono" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Jam Pulang Kerja</label>
+          <input type="time" id="cfg_end" required class="w-full px-3 py-2 border border-amber-300 rounded-lg bg-white font-mono" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Toleransi Telat (Menit)</label>
+          <input type="number" min="0" max="120" id="cfg_tol" required class="w-full px-3 py-2 border border-amber-300 rounded-lg bg-white font-mono" />
+        </div>
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Min. Lembur Terhitung (Menit)</label>
+          <input type="number" min="0" max="240" id="cfg_ot" required class="w-full px-3 py-2 border border-amber-300 rounded-lg bg-white font-mono" />
+        </div>
+
+        <div class="sm:col-span-2 lg:col-span-4 flex justify-end pt-1">
+          <button type="submit" id="btnSaveCfg" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow transition cursor-pointer">
+            Simpan Pengaturan Jam Kerja
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- GRID UTAMA: VERIFIKASI GPS + SELFIE LIVE KAMERA -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+      <!-- KOLOM KIRI: STATUS LOKASI & JADWAL -->
+      <div class="lg:col-span-5 space-y-4">
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-extrabold uppercase tracking-wider text-blue-900">1. Verifikasi Lokasi Perusahaan</h3>
+            <button type="button" onclick="refreshGpsLocation()" class="text-[11px] font-bold text-blue-700 hover:underline cursor-pointer">
+              Refresh GPS
+            </button>
+          </div>
+
+          <div id="gpsBox" class="rounded-xl p-3 border bg-slate-50 border-slate-200 text-xs space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-500">Status Area:</span>
+              <span id="gpsRangeBadge" class="font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">Mendeteksi...</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-500">Jarak ke Kantor:</span>
+              <span id="gpsDistanceText" class="font-mono font-bold text-slate-900">- meter</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-500">Batas Radius:</span>
+              <span id="gpsMaxRadiusText" class="font-mono text-slate-700">- meter</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-500">Koordinat &amp; Akurasi:</span>
+              <span id="gpsCoordText" class="font-mono text-[11px] text-slate-600">-</span>
+            </div>
+          </div>
+
+          <p class="text-[11px] text-slate-500 leading-relaxed">
+            Absensi hanya dapat dikirim jika Anda berada di dalam radius lingkungan perusahaan dengan akurasi GPS yang valid.
+          </p>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-blue-900">2. Jadwal Kerja &amp; Kehadiran Hari Ini</h3>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5">
+              <span class="text-[10px] text-slate-500 block">Jam Masuk / Pulang</span>
+              <span id="infoWorkHours" class="font-mono font-bold text-slate-900">--:-- - --:--</span>
+            </div>
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5">
+              <span class="text-[10px] text-slate-500 block">Toleransi Telat</span>
+              <span id="infoTolerance" class="font-mono font-bold text-slate-900">- menit</span>
+            </div>
+            <div class="bg-emerald-50/70 border border-emerald-200 rounded-xl p-2.5">
+              <span class="text-[10px] text-emerald-800 block">Absen Masuk</span>
+              <span id="todayInText" class="font-mono font-bold text-emerald-950">Belum Absen</span>
+            </div>
+            <div class="bg-blue-50/70 border border-blue-200 rounded-xl p-2.5">
+              <span class="text-[10px] text-blue-800 block">Absen Pulang &amp; Lembur</span>
+              <span id="todayOutText" class="font-mono font-bold text-blue-950">Belum Absen</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="absentAlertCard" class="hidden bg-red-50 border border-red-200 rounded-2xl p-4 shadow-sm space-y-2">
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-red-900">Notifikasi Admin: Belum Absen Hari Ini</h3>
+          <div id="absentListContainer" class="text-xs text-red-800 space-y-1 max-h-36 overflow-y-auto"></div>
+        </div>
+      </div>
+
+      <!-- KOLOM KANAN: KAMERA LIVE SELFIE -->
+      <div class="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col justify-between space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-xs font-extrabold uppercase tracking-wider text-blue-900">3. Verifikasi Wajah (Live Kamera Selfie)</h3>
+            <p class="text-[11px] text-slate-500">Wajib menggunakan kamera langsung. Unggah foto dari galeri/file dinonaktifkan.</p>
+          </div>
+          <button type="button" onclick="startCamera()" class="px-2.5 py-1 text-[11px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg cursor-pointer">
+            Muat Ulang Kamera
+          </button>
+        </div>
+
+        <div class="relative w-full aspect-[4/3] bg-slate-900 rounded-xl overflow-hidden flex items-center justify-center border border-slate-300">
+          <video id="cameraVideo" autoplay playsinline muted class="w-full h-full object-cover mirror-video"></video>
+          <img id="capturedPreview" alt="Hasil Selfie" class="hidden w-full h-full object-cover" />
+          <div id="cameraErrorOverlay" class="hidden absolute inset-0 bg-slate-900/90 text-white p-4 flex flex-col items-center justify-center text-center space-y-2">
+            <p id="cameraErrorText" class="text-xs text-red-300 font-semibold">Kamera tidak dapat diakses.</p>
+            <button type="button" onclick="startCamera()" class="px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg cursor-pointer">Izinkan &amp; Coba Lagi</button>
+          </div>
+          <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between pointer-events-none">
+            <span class="px-2 py-0.5 rounded bg-black/60 text-white text-[10px] font-mono">LIVE CAMERA ONLY</span>
+            <span id="camStampOverlay" class="px-2 py-0.5 rounded bg-black/60 text-emerald-300 text-[10px] font-mono"></span>
+          </div>
+        </div>
+        <canvas id="snapshotCanvas" class="hidden"></canvas>
+
+        <div class="space-y-2.5">
+          <div class="flex gap-2">
+            <button type="button" id="btnCapture" onclick="captureSelfie()" class="flex-1 py-2.5 px-4 bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold rounded-xl shadow transition cursor-pointer">
+              Ambil Foto Selfie
+            </button>
+            <button type="button" id="btnRetake" onclick="retakeSelfie()" class="hidden py-2.5 px-4 bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-bold rounded-xl transition cursor-pointer">
+              Foto Ulang
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2.5 pt-1">
+            <button type="button" id="btnClockIn" onclick="submitAttendance('IN')" disabled class="py-3 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs sm:text-sm font-extrabold rounded-xl shadow transition cursor-pointer">
+              Submit Absen Masuk
+            </button>
+            <button type="button" id="btnClockOut" onclick="submitAttendance('OUT')" disabled class="py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs sm:text-sm font-extrabold rounded-xl shadow transition cursor-pointer">
+              Submit Absen Pulang
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABEL RIWAYAT ABSENSI & PERHITUNGAN LEMBUR -->
+    <section class="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h3 class="text-sm font-extrabold text-slate-900">Riwayat Kehadiran, Lokasi &amp; Lembur</h3>
+          <p id="historyScopeLabel" class="text-[11px] text-slate-500">Menampilkan catatan absensi terverifikasi GPS &amp; selfie.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <label id="mineFilterWrap" class="hidden items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer">
+            <input type="checkbox" id="chkMineOnly" onchange="loadAttendanceData()" class="accent-blue-600" />
+            <span>Hanya milik saya</span>
+          </label>
+          <button type="button" onclick="exportCsv()" class="px-3 py-1.5 text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg cursor-pointer">
+            Unduh CSV
+          </button>
+          <button type="button" onclick="loadAttendanceData()" class="px-3 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg cursor-pointer">
+            Refresh Data
+          </button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-slate-100 text-slate-700 border-b border-slate-200">
+              <th class="py-2.5 px-3 font-bold">Tanggal</th>
+              <th class="py-2.5 px-3 font-bold">Karyawan</th>
+              <th class="py-2.5 px-3 font-bold">Masuk</th>
+              <th class="py-2.5 px-3 font-bold">Status</th>
+              <th class="py-2.5 px-3 font-bold">Pulang</th>
+              <th class="py-2.5 px-3 font-bold">Lembur</th>
+              <th class="py-2.5 px-3 font-bold">Lokasi &amp; Selfie</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody" class="divide-y divide-slate-100">
+            <tr><td colspan="7" class="py-8 text-center text-slate-400">Memuat riwayat absensi...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL LIHAT BUKTI SELFIE & KOORDINAT -->
+  <div id="proofModal" class="fixed inset-0 z-50 bg-slate-900/80 hidden items-center justify-center p-4" onclick="if(event.target===this) closeProofModal()">
+    <div class="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl">
+      <div class="px-4 py-3 bg-slate-900 text-white flex items-center justify-between">
+        <h4 class="text-xs font-bold">Bukti Selfie &amp; Audit Lokasi Absensi</h4>
+        <button type="button" onclick="closeProofModal()" class="text-slate-300 hover:text-white text-sm font-bold cursor-pointer">✕</button>
+      </div>
+      <div id="proofModalBody" class="p-4 space-y-3 text-xs"></div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 hidden px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-semibold shadow-xl"></div>
+
+  <script>
+    const SESSION_KEY = 'gmi_absensi_session_v1';
+    const PORTAL_SESSION_KEY = 'gmi_portal_session_v1';   // sesi login GMI Portal (login sekali untuk semua app)
+    const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbyJ0wb7hkwaYX-p3zXsrq4lt-uWintdnY4mFSY5G-2uvZsEOhHK0rZ2AfZyMn0SA3A3/exec';
+    let CONFIG_GAS_URL = '';
+
+    let workConfig = null;
+    let currentGps = null;
+    let capturedDataUrl = '';
+    let cameraStream = null;
+    let todayRecord = null;
+    let historyCache = [];
+
+    function escapeHtml(v) {
+      return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      clearTimeout(el._t);
+      el._t = setTimeout(() => el.classList.add('hidden'), 3500);
+    }
+
+    async function loadWebAppUrl() {
+      try {
+        const r = await fetch('webapp.txt?_=' + Date.now(), { cache: 'no-store' });
+        if (!r.ok) return;
+        const lines = (await r.text()).split(/\r?\n/);
+        for (const raw of lines) {
+          const l = raw.trim();
+          if (l && !l.startsWith('#') && /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(l)) {
+            CONFIG_GAS_URL = l;
+            break;
+          }
+        }
+      } catch (e) {}
+    }
+    const configReady = loadWebAppUrl();
+
+    function getSession() {
+      try {
+        const own = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+        if (own && own.sessionToken) return own;
+        const shared = JSON.parse(localStorage.getItem(PORTAL_SESSION_KEY) || 'null');
+        if (shared && shared.sessionToken) {
+          localStorage.setItem(SESSION_KEY, JSON.stringify(shared));
+          return shared;
+        }
+        return null;
+      } catch (e) { return null; }
+    }
+
+    async function callApi(payload) {
+      await configReady;
+      const body = { ...(payload || {}) };
+      if (!body.sessionToken) {
+        const s = getSession();
+        if (s && s.sessionToken) body.sessionToken = s.sessionToken;
+      }
+      const resp = await fetch(CONFIG_GAS_URL || DEFAULT_GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(body),
+        redirect: 'follow'
+      });
+      return JSON.parse(await resp.text());
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('login_email').value.trim().toLowerCase();
+      const password = document.getElementById('login_password').value;
+      const btn = document.getElementById('btnLogin');
+      const alertBox = document.getElementById('loginAlert');
+      btn.disabled = true; btn.textContent = 'Memeriksa...';
+      alertBox.classList.add('hidden');
+
+      try {
+        const res = await callApi({ action: 'login', email, password });
+        if (!res || !res.ok) {
+          alertBox.textContent = (res && res.message) || 'Login gagal.';
+          alertBox.className = 'text-xs rounded-lg px-3 py-2 border bg-red-50 border-red-200 text-red-800';
+          alertBox.classList.remove('hidden');
+          return;
+        }
+        const session = {
+          name: res.user.name, role: res.user.role, email: res.user.email,
+          isAdmin: Boolean(res.user.isAdmin), sessionToken: res.token
+        };
+        localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+        document.getElementById('login_password').value = '';
+        initApp(session);
+      } catch (err) {
+        alertBox.textContent = 'Gagal terhubung ke server.';
+        alertBox.className = 'text-xs rounded-lg px-3 py-2 border bg-red-50 border-red-200 text-red-800';
+        alertBox.classList.remove('hidden');
+      } finally {
+        btn.disabled = false; btn.textContent = 'Masuk & Mulai Absensi';
+      }
+    }
+
+    async function handleLogout() {
+      const s = getSession();
+      if (s && s.sessionToken) {
+        callApi({ action: 'logout', sessionToken: s.sessionToken }).catch(() => {});
+      }
+      localStorage.removeItem(SESSION_KEY);
+      localStorage.removeItem(PORTAL_SESSION_KEY);
+      location.reload();
+    }
+
+    async function checkAuth() {
+      const s = getSession();
+      if (!s || !s.sessionToken) {
+        document.getElementById('loginOverlay').classList.remove('hidden');
+        document.getElementById('loginOverlay').classList.add('flex');
+        return;
+      }
+      try {
+        const res = await callApi({ action: 'whoami', sessionToken: s.sessionToken });
+        if (res && res.ok && res.user) {
+          const fresh = { ...s, name: res.user.name, role: res.user.role, isAdmin: Boolean(res.user.isAdmin) };
+          localStorage.setItem(SESSION_KEY, JSON.stringify(fresh));
+          initApp(fresh);
+          return;
+        }
+      } catch (e) {}
+      localStorage.removeItem(SESSION_KEY);
+      try { localStorage.removeItem(PORTAL_SESSION_KEY); } catch (e) {}
+      document.getElementById('loginOverlay').classList.remove('hidden');
+      document.getElementById('loginOverlay').classList.add('flex');
+    }
+
+    function initApp(session) {
+      document.getElementById('loginOverlay').classList.add('hidden');
+      document.getElementById('loginOverlay').classList.remove('flex');
+      document.getElementById('mainApp').classList.remove('hidden');
+      document.getElementById('userBadge').classList.remove('hidden');
+      document.getElementById('headerUserName').textContent = session.name;
+      document.getElementById('headerUserRole').textContent = session.isAdmin ? '(Admin)' : `(${session.role})`;
+
+      if (session.isAdmin) {
+        document.getElementById('btnAdminSettings').classList.remove('hidden');
+        document.getElementById('mineFilterWrap').classList.remove('hidden');
+        document.getElementById('mineFilterWrap').classList.add('flex');
+      }
+
+      startLiveClock();
+      startCamera();
+      loadAttendanceData();
+    }
+
+    function startLiveClock() {
+      const tick = () => {
+        const now = new Date();
+        const pad = n => String(n).padStart(2, '0');
+        const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+        document.getElementById('liveClock').textContent = timeStr;
+        document.getElementById('liveDate').textContent = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        document.getElementById('camStampOverlay').textContent = timeStr;
+        updateStatusBanner();
+      };
+      tick();
+      setInterval(tick, 1000);
+    }
+
+    function updateStatusBanner() {
+      if (!workConfig) return;
+      const banner = document.getElementById('statusBanner');
+      const icon = document.getElementById('statusIcon');
+      const title = document.getElementById('statusTitle');
+      const pill = document.getElementById('statusPill');
+      const desc = document.getElementById('statusDesc');
+
+      const now = new Date();
+      const nowMin = now.getHours() * 60 + now.getMinutes();
+      const [sh, sm] = workConfig.workStartTime.split(':').map(Number);
+      const startMin = sh * 60 + sm;
+      const limitMin = startMin + Number(workConfig.lateToleranceMin || 0);
+
+      if (todayRecord && todayRecord.clockIn) {
+        if (todayRecord.clockOut) {
+          banner.className = 'rounded-2xl p-4 border shadow-sm flex flex-wrap items-center justify-between gap-3 bg-blue-50 border-blue-200';
+          icon.className = 'w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 font-bold';
+          icon.textContent = '✓';
+          title.textContent = 'Absensi Hari Ini Selesai';
+          pill.className = 'px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-200 text-blue-900';
+          pill.textContent = 'SELESAI';
+          const otText = todayRecord.overtimeMinutes > 0 ? ` | Lembur: ${todayRecord.overtimeMinutes} menit` : '';
+          desc.textContent = `Masuk: ${todayRecord.clockIn} (${todayRecord.clockInStatus}) • Pulang: ${todayRecord.clockOut}${otText}`;
+        } else if (todayRecord.clockInStatus === 'TERLAMBAT') {
+          banner.className = 'rounded-2xl p-4 border shadow-sm flex flex-wrap items-center justify-between gap-3 bg-amber-50 border-amber-300';
+          icon.className = 'w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 font-bold';
+          icon.textContent = '!';
+          title.textContent = `Anda Hadir Terlambat (${todayRecord.lateMinutes} Menit)`;
+          pill.className = 'px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-200 text-amber-900';
+          pill.textContent = 'TERLAMBAT';
+          desc.textContent = `Absen masuk pukul ${todayRecord.clockIn}. Jangan lupa submit Absen Pulang setelah pukul ${workConfig.workEndTime}.`;
+        } else {
+          banner.className = 'rounded-2xl p-4 border shadow-sm flex flex-wrap items-center justify-between gap-3 bg-emerald-50 border-emerald-200';
+          icon.className = 'w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 font-bold';
+          icon.textContent = '✓';
+          title.textContent = 'Anda Absen Tepat Waktu';
+          pill.className = 'px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-200 text-emerald-900';
+          pill.textContent = 'TEPAT WAKTU';
+          desc.textContent = `Absen masuk tercatat pukul ${todayRecord.clockIn}. Jam pulang standar: ${workConfig.workEndTime}.`;
+        }
+      } else {
+        if (nowMin > limitMin) {
+          const diff = nowMin - startMin;
+          banner.className = 'rounded-2xl p-4 border shadow-sm flex flex-wrap items-center justify-between gap-3 bg-red-50 border-red-300';
+          icon.className = 'w-10 h-10 rounded-xl bg-red-600 text-white flex items-center justify-center shrink-0 font-bold';
+          icon.textContent = '!';
+          title.textContent = `Peringatan: Anda Belum Absen Masuk (Telat ${diff} Menit)`;
+          pill.className = 'px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-200 text-red-900';
+          pill.textContent = 'BELUM ABSEN / TELAT';
+          desc.textContent = `Jadwal masuk pukul ${workConfig.workStartTime} (toleransi ${workConfig.lateToleranceMin} menit). Segera submit absen di area perusahaan.`;
+        } else {
+          banner.className = 'rounded-2xl p-4 border shadow-sm flex flex-wrap items-center justify-between gap-3 bg-white border-slate-200';
+          icon.className = 'w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 font-bold';
+          icon.textContent = '⏰';
+          title.textContent = 'Anda Belum Melakukan Absen Masuk Hari Ini';
+          pill.className = 'px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-800';
+          pill.textContent = 'TEPAT WAKTU TERSEDIA';
+          desc.textContent = `Silakan ambil selfie di dalam radius ${workConfig.officeRadius}m kantor sebelum pukul ${workConfig.workStartTime}.`;
+        }
+      }
+    }
+
+    function haversineMeters(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const toRad = d => d * Math.PI / 180;
+      const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+      return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    }
+
+    function refreshGpsLocation() {
+      const badge = document.getElementById('gpsRangeBadge');
+      badge.textContent = 'Mendeteksi GPS...';
+      badge.className = 'font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700';
+
+      if (!navigator.geolocation) {
+        badge.textContent = 'GPS Tidak Didukung';
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          const accuracy = Math.round(pos.coords.accuracy || 0);
+          const dist = (workConfig && workConfig.officeLat !== '' && workConfig.officeLng !== '') ? haversineMeters(lat, lng, workConfig.officeLat, workConfig.officeLng) : null;
+          currentGps = { lat, lng, accuracy, distance: dist, time: pos.timestamp };
+
+          document.getElementById('gpsCoordText').textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)} (±${accuracy}m)`;
+          if (workConfig && (workConfig.officeLat === '' || workConfig.officeLng === '')) {
+            badge.textContent = 'LOKASI KANTOR BELUM DIATUR ADMIN';
+            badge.className = 'font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800';
+          } else if (workConfig && dist !== null) {
+            document.getElementById('gpsDistanceText').textContent = `${dist} meter`;
+            document.getElementById('gpsMaxRadiusText').textContent = `${workConfig.officeRadius} meter`;
+            const inside = dist <= workConfig.officeRadius && accuracy <= 200;
+            badge.textContent = inside ? 'DI DALAM AREA KANTOR' : 'DI LUAR AREA KANTOR';
+            badge.className = inside
+              ? 'font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800'
+              : 'font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-800';
+          }
+          updateSubmitButtons();
+        },
+        err => {
+          currentGps = null;
+          badge.textContent = 'Izin GPS Ditolak';
+          badge.className = 'font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-800';
+          updateSubmitButtons();
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
+
+    async function startCamera() {
+      const video = document.getElementById('cameraVideo');
+      const errOverlay = document.getElementById('cameraErrorOverlay');
+      errOverlay.classList.add('hidden');
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(t => t.stop());
+      }
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+          audio: false
+        });
+        video.srcObject = cameraStream;
+      } catch (e) {
+        document.getElementById('cameraErrorText').textContent = 'Akses kamera ditolak atau tidak tersedia. Absensi wajib selfie langsung.';
+        errOverlay.classList.remove('hidden');
+      }
+    }
+
+    function captureSelfie() {
+      const video = document.getElementById('cameraVideo');
+      if (!video.srcObject || video.readyState < 2) {
+        showToast('Kamera belum siap. Pastikan izin kamera aktif.');
+        return;
+      }
+      const canvas = document.getElementById('snapshotCanvas');
+      const w = 480, h = 360;
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+
+      ctx.save();
+      ctx.translate(w, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, 0, 0, w, h);
+      ctx.restore();
+
+      const s = getSession() || {};
+      const nowStr = new Date().toLocaleString('id-ID');
+      const gpsStr = currentGps ? `${currentGps.lat.toFixed(5)}, ${currentGps.lng.toFixed(5)} (${currentGps.distance ?? '?'}m)` : 'GPS N/A';
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+      ctx.fillRect(0, h - 46, w, 46);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.fillText(`${s.name || 'Karyawan'} — PT. Global Mega Indonesia`, 10, h - 27);
+      ctx.font = '11px monospace';
+      ctx.fillStyle = '#6ee7b7';
+      ctx.fillText(`${nowStr} | GPS: ${gpsStr}`, 10, h - 10);
+
+      // Kompres sampai muat di satu sel Google Sheets (maks 45.000 karakter)
+      capturedDataUrl = '';
+      for (const q of [0.75, 0.6, 0.5, 0.4, 0.3]) {
+        capturedDataUrl = canvas.toDataURL('image/jpeg', q);
+        if (capturedDataUrl.length <= 44000) break;
+      }
+      const preview = document.getElementById('capturedPreview');
+      preview.src = capturedDataUrl;
+      preview.classList.remove('hidden');
+      video.classList.add('hidden');
+      document.getElementById('btnCapture').classList.add('hidden');
+      document.getElementById('btnRetake').classList.remove('hidden');
+      updateSubmitButtons();
+      showToast('Foto selfie berhasil diambil');
+    }
+
+    function retakeSelfie() {
+      capturedDataUrl = '';
+      document.getElementById('capturedPreview').classList.add('hidden');
+      document.getElementById('cameraVideo').classList.remove('hidden');
+      document.getElementById('btnCapture').classList.remove('hidden');
+      document.getElementById('btnRetake').classList.add('hidden');
+      updateSubmitButtons();
+    }
+
+    function updateSubmitButtons() {
+      const btnIn = document.getElementById('btnClockIn');
+      const btnOut = document.getElementById('btnClockOut');
+      const insideArea = currentGps && workConfig && currentGps.distance <= workConfig.officeRadius && currentGps.accuracy <= 200;
+      const hasSelfie = Boolean(capturedDataUrl);
+
+      const canIn = insideArea && hasSelfie && !(todayRecord && todayRecord.clockIn);
+      const canOut = insideArea && hasSelfie && (todayRecord && todayRecord.clockIn && !todayRecord.clockOut);
+
+      btnIn.disabled = !canIn;
+      btnOut.disabled = !canOut;
+    }
+
+    async function submitAttendance(type) {
+      if (!currentGps || !capturedDataUrl) return;
+      const btn = type === 'IN' ? document.getElementById('btnClockIn') : document.getElementById('btnClockOut');
+      const orig = btn.textContent;
+      btn.disabled = true; btn.textContent = 'Mengirim...';
+
+      try {
+        const res = await callApi({
+          action: 'submit_attendance',
+          type,
+          lat: currentGps.lat,
+          lng: currentGps.lng,
+          accuracy: currentGps.accuracy,
+          photo: capturedDataUrl,
+          gpsTime: currentGps.time,
+          deviceInfo: navigator.userAgent
+        });
+        if (!res || !res.ok) {
+          alert((res && res.message) || 'Gagal menyimpan absensi.');
+          updateSubmitButtons();
+          return;
+        }
+        showToast(res.message);
+        retakeSelfie();
+        await loadAttendanceData();
+      } catch (e) {
+        alert('Gagal terhubung ke server: ' + e.message);
+      } finally {
+        btn.textContent = orig;
+        updateSubmitButtons();
+      }
+    }
+
+    async function loadAttendanceData() {
+      try {
+        const mine = Boolean(document.getElementById('chkMineOnly')?.checked);
+        const res = await callApi({ action: 'get_attendance_data', mine });
+        if (!res || !res.ok) return;
+
+        workConfig = res.config;
+        todayRecord = res.todayRecord;
+        historyCache = res.history || [];
+
+        document.getElementById('infoWorkHours').textContent = `${workConfig.workStartTime} - ${workConfig.workEndTime}`;
+        document.getElementById('infoTolerance').textContent = `${workConfig.lateToleranceMin} menit`;
+
+        if (res.isAdmin) {
+          document.getElementById('cfg_lat').value = workConfig.officeLat;
+          document.getElementById('cfg_lng').value = workConfig.officeLng;
+          document.getElementById('cfg_radius').value = workConfig.officeRadius;
+          document.getElementById('cfg_start').value = workConfig.workStartTime;
+          document.getElementById('cfg_end').value = workConfig.workEndTime;
+          document.getElementById('cfg_tol').value = workConfig.lateToleranceMin;
+          document.getElementById('cfg_ot').value = workConfig.overtimeMinThreshold;
+
+          const absentCard = document.getElementById('absentAlertCard');
+          const absentList = document.getElementById('absentListContainer');
+          if (res.absentToday && res.absentToday.length > 0) {
+            absentCard.classList.remove('hidden');
+            absentList.innerHTML = res.absentToday.map(u =>
+              `<div>• <b>${escapeHtml(u.name)}</b> (${escapeHtml(u.role)})</div>`
+            ).join('');
+          } else {
+            absentCard.classList.add('hidden');
+          }
+        }
+
+        if (todayRecord && todayRecord.clockIn) {
+          document.getElementById('todayInText').textContent = `${todayRecord.clockIn} (${todayRecord.clockInStatus})`;
+        } else {
+          document.getElementById('todayInText').textContent = 'Belum Absen';
+        }
+
+        if (todayRecord && todayRecord.clockOut) {
+          const ot = todayRecord.overtimeMinutes > 0 ? ` (+Lembur ${todayRecord.overtimeMinutes}m)` : '';
+          document.getElementById('todayOutText').textContent = `${todayRecord.clockOut}${ot}`;
+        } else {
+          document.getElementById('todayOutText').textContent = 'Belum Absen';
+        }
+
+        refreshGpsLocation();
+        updateStatusBanner();
+        renderHistoryTable();
+      } catch (e) {
+        showToast('Gagal memuat data absensi');
+      }
+    }
+
+    function renderHistoryTable() {
+      const tbody = document.getElementById('historyTableBody');
+      if (!historyCache.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-400">Belum ada data absensi tercatat.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = historyCache.map((r, idx) => {
+        const badge = r.clockInStatus === 'TERLAMBAT'
+          ? `<span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 font-bold text-[10px]">TELAT ${r.lateMinutes}m</span>`
+          : `<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">TEPAT WAKTU</span>`;
+        const otBadge = r.overtimeMinutes > 0
+          ? `<span class="font-mono font-bold text-indigo-700">${r.overtimeMinutes} menit</span>`
+          : `<span class="text-slate-400">-</span>`;
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="py-2.5 px-3 font-mono font-semibold text-slate-800">${escapeHtml(r.date)}</td>
+            <td class="py-2.5 px-3">
+              <div class="font-bold text-slate-900">${escapeHtml(r.name)}</div>
+              <div class="text-[10px] text-slate-500">${escapeHtml(r.role)}</div>
+            </td>
+            <td class="py-2.5 px-3 font-mono font-bold text-slate-800">${escapeHtml(r.clockIn || '-')}</td>
+            <td class="py-2.5 px-3">${badge}</td>
+            <td class="py-2.5 px-3 font-mono font-bold text-slate-800">${escapeHtml(r.clockOut || '-')}</td>
+            <td class="py-2.5 px-3">${otBadge}</td>
+            <td class="py-2.5 px-3">
+              <button type="button" onclick="openProofModal(${idx})" class="px-2.5 py-1 text-[11px] font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg cursor-pointer">
+                Lihat Bukti (${escapeHtml(r.clockInDist || '0')}m)
+              </button>
+              ${r.flags ? `<div class="mt-1 text-[10px] font-bold text-red-700" title="${escapeHtml(r.flags)}">⚠ GPS mencurigakan: ${escapeHtml(r.flags)}</div>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function exportCsv() {
+      if (!historyCache.length) {
+        showToast('Tidak ada data untuk diunduh');
+        return;
+      }
+      const headers = ['Tanggal', 'Nama', 'Jabatan', 'Email', 'Jam Masuk', 'Status', 'Telat (Menit)', 'Jarak Masuk (m)', 'Jam Pulang', 'Lembur (Menit)', 'Jarak Pulang (m)'];
+      const rows = historyCache.map(r => [
+        r.date, r.name, r.role, r.email, r.clockIn, r.clockInStatus, r.lateMinutes, r.clockInDist, r.clockOut || '', r.overtimeMinutes, r.clockOutDist || ''
+      ]);
+      const csv = [headers, ...rows].map(row => row.map(v => { let t = String(v ?? ''); if (/^[=+\-@\t\r]/.test(t)) t = "'" + t; return `"${t.replace(/"/g, '""')}"`; }).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Rekap_Absensi_GMI_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    async function openProofModal(idx) {
+      const r = historyCache[idx];
+      if (!r) return;
+      const body = document.getElementById('proofModalBody');
+      const m = document.getElementById('proofModal');
+      const photoBox = (src, empty) => src
+        ? `<img src="${escapeHtml(src)}" class="w-full rounded-lg border" alt="Selfie" />`
+        : `<div class="p-4 bg-slate-100 text-center text-slate-400">${empty}</div>`;
+      const render = (ph) => {
+        body.innerHTML = `
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <div class="font-bold text-slate-700 mb-1">Selfie Masuk (${escapeHtml(r.clockIn)})</div>
+            ${photoBox(ph && ph.in, 'Tidak ada foto')}
+            <div class="text-[10px] font-mono text-slate-500 mt-1">GPS: ${escapeHtml(r.clockInLat)}, ${escapeHtml(r.clockInLng)} (±${escapeHtml(r.clockInAcc)}m) • Jarak: ${escapeHtml(r.clockInDist)}m</div>
+          </div>
+          <div>
+            <div class="font-bold text-slate-700 mb-1">Selfie Pulang (${escapeHtml(r.clockOut || 'Belum')})</div>
+            ${photoBox(ph && ph.out, 'Belum absen pulang')}
+            ${r.clockOut ? `<div class="text-[10px] font-mono text-slate-500 mt-1">GPS: ${escapeHtml(r.clockOutLat)}, ${escapeHtml(r.clockOutLng)} (±${escapeHtml(r.clockOutAcc)}m) • Jarak: ${escapeHtml(r.clockOutDist)}m</div>` : ''}
+          </div>
+        </div>`;
+      };
+      body.innerHTML = '<div class="py-8 text-center text-slate-400">Memuat foto bukti...</div>';
+      m.classList.remove('hidden'); m.classList.add('flex');
+      try {
+        const res = await callApi({ action: 'get_attendance_photo', date: r.date, email: r.email });
+        render(res && res.ok ? res : null);
+      } catch (e) { render(null); }
+    }
+
+    function closeProofModal() {
+      const m = document.getElementById('proofModal');
+      m.classList.add('hidden'); m.classList.remove('flex');
+    }
+
+    function toggleAdminPanel() {
+      document.getElementById('adminConfigSection').classList.toggle('hidden');
+    }
+
+    function useCurrentGpsForOffice() {
+      if (!currentGps) {
+        showToast('Tunggu hingga lokasi GPS terdeteksi terlebih dahulu');
+        return;
+      }
+      document.getElementById('cfg_lat').value = currentGps.lat.toFixed(6);
+      document.getElementById('cfg_lng').value = currentGps.lng.toFixed(6);
+      showToast('Koordinat GPS saat ini dimasukkan ke form');
+    }
+
+    async function saveWorkConfig(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSaveCfg');
+      btn.disabled = true; btn.textContent = 'Menyimpan...';
+      try {
+        const res = await callApi({
+          action: 'set_work_config',
+          officeLat: document.getElementById('cfg_lat').value,
+          officeLng: document.getElementById('cfg_lng').value,
+          officeRadius: document.getElementById('cfg_radius').value,
+          workStartTime: document.getElementById('cfg_start').value,
+          workEndTime: document.getElementById('cfg_end').value,
+          lateToleranceMin: document.getElementById('cfg_tol').value,
+          overtimeMinThreshold: document.getElementById('cfg_ot').value
+        });
+        if (!res || !res.ok) {
+          alert((res && res.message) || 'Gagal menyimpan pengaturan');
+          return;
+        }
+        showToast(res.message);
+        await loadAttendanceData();
+      } catch (err) {
+        alert('Gagal terhubung ke server');
+      } finally {
+        btn.disabled = false; btn.textContent = 'Simpan Pengaturan Jam Kerja';
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', checkAuth);
+  </script>
+</body>
+</html>
