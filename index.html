@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Portal Aplikasi - PT. Global Mega Indonesia</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="GMI Portal" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .app-card { transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease; }
+    .app-card:hover { transform: translateY(-2px); }
+    .hero-grid {
+      background-image: radial-gradient(rgba(148, 163, 184, 0.16) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- TOP BAR -->
+  <header class="bg-slate-900 text-white shadow-md shrink-0">
+    <div class="max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="bg-white px-2.5 py-1 rounded-lg shadow flex items-center shrink-0">
+          <svg width="64" height="24" viewBox="0 0 260 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M97 6H54C24 6 5 23 5 48C5 73 24 90 54 90H97V41H47V54H81V76H55C33 76 21 65 21 48C21 31 33 20 55 20H97V6Z" fill="#0F2C8C"/>
+            <path d="M98 6H128L165 65L173 6H203L227 90H208L190 25L181 90H163L122 25L141 90H122L98 6Z" fill="#0F2C8C"/>
+            <path d="M227 6H246V90H227V6Z" fill="#0F2C8C"/>
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <h1 class="text-sm sm:text-base font-bold leading-tight truncate">Portal Aplikasi Internal</h1>
+          <p class="text-[11px] text-slate-400 truncate">PT. Global Mega Indonesia</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <button type="button" id="btnInstallApp" onclick="triggerInstallApp()" class="hidden items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-lg shadow transition cursor-pointer">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"></path></svg>
+          <span>Instal Aplikasi</span>
+        </button>
+
+        <div id="portalSessionChip" class="hidden items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 text-xs">
+          <div class="leading-tight">
+            <span class="font-bold text-white block" id="portalUserName"></span>
+            <span class="text-[10px] text-slate-400 block" id="portalUserRole"></span>
+          </div>
+          <button type="button" onclick="logoutEverywhere()" class="ml-1 px-2 py-0.5 text-[10px] font-semibold bg-red-600/80 hover:bg-red-600 text-white rounded cursor-pointer">Keluar</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO BANNER -->
+  <section class="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white hero-grid border-b border-slate-800">
+    <div class="max-w-5xl mx-auto px-4 py-8 sm:py-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div class="space-y-2 max-w-2xl">
+        <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-blue-500/15 border border-blue-400/30 text-[11px] font-semibold text-blue-200">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span>Kawasan Industri Jababeka 1, Cikarang</span>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight leading-snug">
+          Pusat Aplikasi Operasional PT. Global Mega Indonesia
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+          Pilih modul aplikasi yang ingin digunakan. Sistem mendukung penyimpanan cloud terpusat dan mode offline pada perangkat seluler maupun desktop.
+        </p>
+      </div>
+      <div class="text-left sm:text-right shrink-0">
+        <div id="clockDate" class="text-xs font-semibold text-slate-300"></div>
+        <div id="clockTime" class="text-xl sm:text-2xl font-extrabold font-mono text-white tracking-wider"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- APP LAUNCHER GRID -->
+  <main class="flex-1 max-w-5xl w-full mx-auto px-4 py-7 space-y-6">
+    <div class="flex items-center justify-between gap-3">
+      <div>
+        <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-500">Daftar Aplikasi Tersedia</h3>
+      </div>
+      <span id="appCountLabel" class="text-[11px] text-slate-500"></span>
+    </div>
+
+    <div id="appGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+    <div id="iosInstallHint" class="hidden bg-blue-50 border border-blue-200 rounded-xl p-3.5 text-xs text-blue-900 flex items-start gap-2.5">
+      <svg class="w-4 h-4 text-blue-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z"></path></svg>
+      <div>
+        <strong class="font-bold">Instal di iPhone / iPad:</strong> ketuk tombol <em>Bagikan</em> (ikon kotak dengan panah ke atas) di Safari, lalu pilih <strong>Tambahkan ke Layar Utama</strong>.
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-slate-200 bg-white py-4 px-4 text-center text-[11px] text-slate-500">
+    &copy; <span id="yearNow"></span> PT. Global Mega Indonesia &mdash; Sistem Manajemen Internal Terpadu
+  </footer>
+
+  <script>
+    const APP_SESSION_KEYS = {
+      laporan: 'gmi_active_session_v2',
+      absensi: 'gmi_absensi_session_v1'
+    };
+
+    const APPS = [
+      {
+        id: 'laporan',
+        name: 'Generator Laporan',
+        desc: 'Buat, simpan, dan cetak Laporan Inspeksi Mesin (Form LPM-01) lengkap dengan foto, tanda tangan, dan kop resmi perusahaan.',
+        href: 'laporan.html',
+        icon: 'document',
+        color: 'blue',
+        status: 'active',
+        tag: 'Form LPM-01',
+        sessionKey: APP_SESSION_KEYS.laporan
+      },
+      {
+        id: 'absensi',
+        name: 'Absensi Karyawan',
+        desc: 'Absensi masuk & pulang berbasis Geofencing GPS perusahaan, wajib selfie langsung kamera, notifikasi telat, dan hitung lembur otomatis.',
+        href: 'absensi.html',
+        icon: 'chart',
+        color: 'emerald',
+        status: 'active',
+        tag: 'HR & Kehadiran',
+        sessionKey: APP_SESSION_KEYS.absensi
+      }
+    ];
+
+    const ICON_SVG = {
+      document: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>',
+      chart: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>',
+      wrench: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"></path>'
+    };
+
+    const COLOR_MAP = {
+      blue:    { bg: 'bg-blue-50',    text: 'text-blue-700',    border: 'border-blue-200',    btn: 'bg-blue-700 hover:bg-blue-800 text-white' },
+      emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', btn: 'bg-emerald-700 hover:bg-emerald-800 text-white' },
+      amber:   { bg: 'bg-amber-50',   text: 'text-amber-700',   border: 'border-amber-200',   btn: 'bg-amber-600 hover:bg-amber-700 text-white' }
+    };
+
+    function escapeHtml(v) {
+      return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function readSession(key) {
+      if (!key) return null;
+      try {
+        const s = JSON.parse(localStorage.getItem(key) || 'null');
+        return (s && s.sessionToken && s.email) ? s : null;
+      } catch (e) { return null; }
+    }
+
+    function findAnyActiveSession() {
+      for (const app of APPS) {
+        const s = readSession(app.sessionKey);
+        if (s) return s;
+      }
+      return null;
+    }
+
+    function renderSessionChip() {
+      const s = findAnyActiveSession();
+      const chip = document.getElementById('portalSessionChip');
+      if (!s) {
+        chip.classList.add('hidden');
+        chip.classList.remove('flex');
+        return;
+      }
+      document.getElementById('portalUserName').textContent = s.name || s.email;
+      document.getElementById('portalUserRole').textContent = s.isAdmin ? 'Admin' : (s.role || '');
+      chip.classList.remove('hidden');
+      chip.classList.add('flex');
+    }
+
+    function logoutEverywhere() {
+      Object.values(APP_SESSION_KEYS).forEach(k => localStorage.removeItem(k));
+      renderSessionChip();
+      renderApps();
+    }
+
+    function renderApps() {
+      const grid = document.getElementById('appGrid');
+      const activeCount = APPS.filter(a => a.status === 'active').length;
+      document.getElementById('appCountLabel').textContent = `${activeCount} aplikasi aktif`;
+
+      grid.innerHTML = APPS.map(app => {
+        const c = COLOR_MAP[app.color] || COLOR_MAP.blue;
+        const isActive = app.status === 'active';
+        const appSess = readSession(app.sessionKey);
+        const statusBadge = isActive
+          ? (appSess
+              ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">Masuk: ${escapeHtml(appSess.name || appSess.email)}</span>`
+              : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">Perlu Login</span>`)
+          : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">Segera Hadir</span>';
+
+        const actionEl = isActive
+          ? `<a href="${escapeHtml(app.href)}" class="inline-flex items-center justify-center gap-1.5 w-full py-2.5 px-4 text-xs font-bold rounded-xl shadow-sm transition ${c.btn}">
+              <span>Buka Aplikasi</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+            </a>`
+          : `<button type="button" disabled class="w-full py-2.5 px-4 text-xs font-bold rounded-xl bg-slate-100 text-slate-400 cursor-not-allowed">Belum Tersedia</button>`;
+
+        return `
+          <article class="app-card bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-300 p-5 flex flex-col justify-between gap-4">
+            <div class="space-y-3">
+              <div class="flex items-start justify-between gap-2">
+                <div class="w-11 h-11 rounded-xl ${c.bg} ${c.text} border ${c.border} flex items-center justify-center shrink-0">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">${ICON_SVG[app.icon] || ICON_SVG.document}</svg>
+                </div>
+                <div class="flex flex-col items-end gap-1">
+                  ${statusBadge}
+                  <span class="text-[10px] font-semibold text-slate-400">${escapeHtml(app.tag || '')}</span>
+                </div>
+              </div>
+              <div>
+                <h4 class="text-base font-extrabold text-slate-900">${escapeHtml(app.name)}</h4>
+                <p class="text-xs text-slate-600 mt-1 leading-relaxed">${escapeHtml(app.desc)}</p>
+              </div>
+            </div>
+            <div>${actionEl}</div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clockDate').textContent = now.toLocaleDateString('id-ID', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+      });
+      document.getElementById('clockTime').textContent = now.toLocaleTimeString('id-ID', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+      });
+    }
+
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const btn = document.getElementById('btnInstallApp');
+      btn.classList.remove('hidden');
+      btn.classList.add('flex');
+    });
+
+    async function triggerInstallApp() {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      document.getElementById('btnInstallApp').classList.add('hidden');
+    }
+
+    function checkIosHint() {
+      const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      if (isIos && !isStandalone) {
+        document.getElementById('iosInstallHint').classList.remove('hidden');
+      }
+    }
+
+    if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('yearNow').textContent = new Date().getFullYear();
+      updateClock();
+      setInterval(updateClock, 1000);
+      renderSessionChip();
+      renderApps();
+      checkIosHint();
+    });
+  </script>
+</body>
+</html>
