@@ -1,1 +1,1 @@
-# gmiportal
+# Welcome to GMI Portal
